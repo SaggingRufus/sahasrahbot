@@ -126,7 +126,7 @@ class LeagueRace():
         return player_list
 
 
-async def process_league_race(target, args, client):
+async def process_league_race(target, episodeid, week, client):
     srl_id = srl.srl_race_id(target)
     srl_race = await srl.get_race(srl_id)
 
@@ -141,7 +141,7 @@ async def process_league_race(target, args, client):
         await client.message(target, "There is already a game generated for this room.  To cancel it, use the $cancel command.")
         return
 
-    generated_league_race = await league_race(episodeid=args.episodeid, week=args.week)
+    generated_league_race = await league_race(episodeid=episodeid, week=week)
     player_names = generated_league_race.get_player_names()
     player_discords = generated_league_race.get_player_discords()
     goal = f"ALTTPR League - {', '.join(player_names)} - {generated_league_race.friendly_name}"

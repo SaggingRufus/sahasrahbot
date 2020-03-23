@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import aiofiles
+import shlex
 
 import pydle
 
@@ -35,9 +36,20 @@ class SrlBot(pydle.Client):
             # handle messages from racebot
             await racebot.handler(target=target, source=source, message=message, client=self)
             # handle user commands
-            await commands.handler(target=target, source=source, message=message, client=self)
+            # await commands.handler(target=target, source=source, message=message, client=self)
+
+            if message.startswith('$'):
+                args = shlex.split(message[1:])
+                obj = {
+                    'target': target,
+                    'source': source,
+                    'message': message,
+                    'client': self,
+                }
+                commands.cli(args=args, _anyio_backend="asyncio", standalone_mode=False, obj=obj)
+
         except Exception as err:
-            await self.message(target, f'{type(err)}: "{str(err)}".  Please contact Synack if this condition persists.')
+            await self.message(target, str(err))
             if not isinstance(err, SahasrahBotException):
                 raise
 
