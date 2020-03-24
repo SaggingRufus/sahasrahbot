@@ -1,12 +1,13 @@
-import asyncclick as click
+import asyncio
+from functools import wraps
 
+import click
 import ircmessage
 
+from alttprbot.alttprgen.mystery import generate_random_game
 # from alttprbot.alttprgen import mystery, preset, spoilers
 from alttprbot.alttprgen.preset import get_preset
-from alttprbot.alttprgen.mystery import generate_random_game
 from alttprbot.alttprgen.spoilers import generate_spoiler_game
-
 from alttprbot.database import (config, spoiler_races, srl_races,
                                 tournament_results)
 from alttprbot.exceptions import SahasrahBotException
@@ -14,19 +15,29 @@ from alttprbot.smz3gen import spoilers as smz3_spoilers
 from alttprbot.tournament import league
 from alttprbot.util.srl import get_race, srl_race_id
 
+# import nest_asyncio
+
+
+# patch asyncio to allow nesting so we can get the click asyncio wrapper to work correctly
+# nest_asyncio.apply()
+
 ACCESSIBLE_RACE_WARNING = ircmessage.style('WARNING: ', bold=True, fg='red') + ircmessage.style('This race is using an accessible ruleset that prohibits most sequence breaking glitches.  Please visit https://link.alttpr.com/accessible for more details!', fg='red')
 
+def coro(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        loop = asyncio.get_event_loop()
+        loop.create_task(func(*args, **kwargs))
+        return
+
+    return wrapper
+
 @click.group()
-@click.option('--channel')
-@click.option('--source')
-@click.pass_context
-async def cli(ctx):
-    ctx.ensure_object(dict)
+@coro
+async def cli():
+    pass
 
-    ctx.obj['race_id'] = srl_race_id(ctx.obj['target']) # if ctx.obj['target'].startswith('#srl-') else None\
-    ctx.obj['race'] = await get_race(ctx.obj['race_id']) if ctx.obj['race_id'] else None
-
-    ctx.obj['festivemode'] = await config.get(0, 'FestiveMode') == "true"
+    
 
 @cli.command(name='preset')
 @click.argument('preset')
@@ -34,6 +45,7 @@ async def cli(ctx):
 @click.option('--silent', default=False)
 @click.option("--hints/--no-hints", default=False)
 @click.pass_context
+@coro
 async def preset_cmd(ctx, preset, accessible, silent, hints):
     if ctx.obj['race'] is None:
         return
@@ -74,6 +86,7 @@ async def preset_cmd(ctx, preset, accessible, silent, hints):
 @click.option('--silent', default=False)
 @click.option("--festive", default=False)
 @click.pass_context
+@coro
 async def mystery_cmd(ctx, weightset, accessible, silent, festive):
     if ctx.obj['race'] is None:
         return
@@ -119,6 +132,7 @@ async def mystery_cmd(ctx, weightset, accessible, silent, festive):
 @click.option('--silent', default=False)
 @click.option("--studytime", default=None)
 @click.pass_context
+@coro
 async def spoiler_cmd(ctx, preset, accessible, silent, studytime):
     if ctx.obj['race'] is None:
         return
@@ -175,6 +189,7 @@ async def spoiler_cmd(ctx, preset, accessible, silent, studytime):
 @click.argument('episode_id')
 @click.option('--week', default=None)
 @click.pass_context
+@coro
 async def leaguerace_cmd(ctx, episode_id, week):
     if ctx.obj['race'] is None:
         return
@@ -188,9 +203,17 @@ async def leaguerace_cmd(ctx, episode_id, week):
 
 @cli.command(name='cancel')
 @click.pass_context
+@coro
 async def cancel_cmd(ctx):
-    if ctx.obj['race'] is None:
+    # ctx.obj['festivemode'] = await config.get(0, 'FestiveMode') == "true"
+
+    ctx.obj['race_id'] = srl_race_id(ctx.obj['target'])
+    # ctx.obj['race'] = await get_race(ctx.obj['race_id'])
+    
+    if ctx.obj['race_id'] is None:
         return
+
+    # srl_race = await get_race(ctx.obj['race_id'])
 
     await srl_races.delete_srl_race(ctx.obj['race_id'])
     await spoiler_races.delete_spoiler_race(ctx.obj['race_id'])
@@ -200,26 +223,31 @@ async def cancel_cmd(ctx):
 
 @cli.command(name='rules')
 @click.pass_context
+@coro
 async def rules_cmd(ctx):
     await ctx.obj['client'].message(ctx.obj['target'], "For the ALTTPR rules for this race, visit https://link.alttpr.com/racerules")
 
 @cli.command(name='accessible')
 @click.pass_context
+@coro
 async def accessible_cmd(ctx):
     await ctx.obj['client'].message(ctx.obj['target'], "For the ALTTPR accessible racing rules, visit https://link.alttpr.com/accessible")
 
 @cli.command(name='help')
 @click.pass_context
+@coro
 async def help_cmd(ctx):
     await ctx.obj['client'].message(ctx.obj['target'], "For documentation on using this bot, visit https://sahasrahbot.synack.live")
 
 @cli.command(name='joinroom')
 @click.argument('channel')
 @click.pass_context
+@coro
 async def joinroom_cmd(ctx, channel):
     await ctx.obj['client'].join(channel)
 
 @cli.command(name='vt')
 @click.pass_context
+@coro
 async def vt_cmd(ctx):
     await ctx.obj['client'].message(ctx.obj['target'], "You summon VT, he looks around confused and curses your next game with bad RNG.")

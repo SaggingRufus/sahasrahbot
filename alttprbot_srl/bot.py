@@ -46,7 +46,11 @@ class SrlBot(pydle.Client):
                     'message': message,
                     'client': self,
                 }
-                commands.cli(args=args, _anyio_backend="asyncio", standalone_mode=False, obj=obj)
+                try:
+                    commands.cli(args=args, obj=obj)
+                except SystemExit as err:
+                    if err.code != 0:
+                        raise
 
         except Exception as err:
             await self.message(target, str(err))

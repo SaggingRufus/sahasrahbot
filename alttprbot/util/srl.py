@@ -9,6 +9,9 @@ from . import http
 
 
 async def get_race(raceid, complete=False):
+    if raceid is None:
+        return None
+        
     # if we're developing locally, we want to have some artifical data to use that isn't from SRL
     if c.DEBUG:
         if raceid == "test":
@@ -28,8 +31,10 @@ async def get_race(raceid, complete=False):
 def srl_race_id(channel):
     if channel == '#srl-synack-testing':
         return 'test'
-    if re.search('^#srl-[a-z0-9]{5}$', channel):
+    elif re.search('^#srl-[a-z0-9]{5}$', channel):
         return channel.partition('-')[-1]
+    else:
+        return None
 
 async def get_all_races():
     return await http.request_generic(f'http://api.speedrunslive.com/races', returntype='json')
