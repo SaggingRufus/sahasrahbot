@@ -47,7 +47,7 @@ class SrlBot(pydle.Client):
                     'client': self,
                 }
                 try:
-                    commands.cli(args=args, obj=obj)
+                    commands.cli(args=args, obj=obj, resilient_parsing=True)
                 except SystemExit as err:
                     if err.code != 0:
                         raise

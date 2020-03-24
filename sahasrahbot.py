@@ -7,6 +7,12 @@ from alttprbot_srl.bot import srlbot
 from alttprbot_twitch.bot import twitchbot
 from alttprbot_api.api import sahasrahbotapi
 
+import nest_asyncio
+
+
+# patch asyncio to allow nesting so we can get the click asyncio wrapper to work correctly
+nest_asyncio.apply()
+
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     loop.create_task(orm.create_pool(loop))

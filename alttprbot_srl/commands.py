@@ -15,11 +15,6 @@ from alttprbot.smz3gen import spoilers as smz3_spoilers
 from alttprbot.tournament import league
 from alttprbot.util.srl import get_race, srl_race_id
 
-# import nest_asyncio
-
-
-# patch asyncio to allow nesting so we can get the click asyncio wrapper to work correctly
-# nest_asyncio.apply()
 
 ACCESSIBLE_RACE_WARNING = ircmessage.style('WARNING: ', bold=True, fg='red') + ircmessage.style('This race is using an accessible ruleset that prohibits most sequence breaking glitches.  Please visit https://link.alttpr.com/accessible for more details!', fg='red')
 
@@ -27,15 +22,17 @@ def coro(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         loop = asyncio.get_event_loop()
-        loop.create_task(func(*args, **kwargs))
-        return
+        return loop.run_until_complete(func(*args, **kwargs))
+        # return
+        # asyncio.run(func(*args, **kwargs))
 
     return wrapper
 
 @click.group()
+@click.pass_context
 @coro
-async def cli():
-    pass
+async def cli(ctx):
+    ctx.ensure_object(dict)
 
     
 
