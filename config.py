@@ -6,7 +6,7 @@ class Config:
     DB_USER = 'username'
     DB_PASS = 'password'
 
-    DISCORD_TOKEN = 'discord_bot_token_here'
+    DISCORD_TOKEN = 'NzExNTk0MDM0NzgyNTM1NzMw.XsFSSQ.lo8UIBbmITTza1QNO8ZOV7WsfSk'
 
     SRL_NICK = 'SahasrahTest'
     SRL_PASSWORD = 'password'
